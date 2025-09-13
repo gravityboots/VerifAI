@@ -3,16 +3,10 @@ import re
 import requests
 from dotenv import load_dotenv
 from typing import List, Dict
-
-# Embedding model
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer # embedding
 import numpy as np
-
-# Latest Chroma vector DB client usage
-import chromadb
+import chromadb # vector db
 from chromadb.config import Settings
-
-# Latest Mistral AI client usage
 from mistralai import Mistral
 
 # Load environment variables
@@ -34,17 +28,15 @@ GOOGLE_API_KEY="AIzaSyAO8ZEPZbZ3PiHAXRnjdf1KX-5cZIWeCmg"
 MISTRAL_API_KEY="G3fIIlh2SkInWxyVqeLvMkilVk1GMpiV"
 
 mistral_model = "mistral-large-latest"
-
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-
-# Initialize persistent local Chroma client
-CHROMA_DIR = "./chroma_db_store"
+CHROMA_DIR = "./chroma_db_store" # initialize persistent local chroma client
 chroma_client = chromadb.PersistentClient(path=CHROMA_DIR, settings=Settings())
 collection = chroma_client.get_or_create_collection(name="misinfo_checker")
 
-########################
-# Claim extraction
-########################
+
+# claim extracting
+
+
 def extract_claims(text):
     claims = re.split(r'(?<=[.!?])\s+', text.strip())
     return [c.strip() for c in claims if c.strip()]
@@ -52,9 +44,10 @@ def extract_claims(text):
 def embed_texts(texts):
     return embedding_model.encode(texts, show_progress_bar=False)
 
-########################
-# API query functions
-########################
+
+# api query functions
+
+
 def query_google_factcheck(claim):
     url = "https://factchecktools.googleapis.com/v1alpha1/claims:search"
     params = {"query": claim, "key": GOOGLE_API_KEY, "languageCode": "en", "pageSize": 5}
@@ -105,9 +98,10 @@ def query_newsdata(claim):
                 results.append(f"News: {title} - {description}")
     return results
 
-########################
-# Vector DB management
-########################
+
+# vector db stuff
+
+
 def index_documents(text_docs):
     if not text_docs:
         return
@@ -130,9 +124,10 @@ def retrieve_similar_docs(query: str, top_k=5) -> List[str]:
     results = collection.query(query_embeddings=[query_vec.tolist()], n_results=top_k)
     return results.get("documents", [[]])[0]
 
-########################
-# Mistral chat interaction
-########################
+
+# mistral model
+
+
 def mistral_chat_generate(prompt):
     with Mistral(api_key=MISTRAL_API_KEY) as mistral:
         response = mistral.chat.complete(
@@ -146,9 +141,10 @@ def mistral_chat_generate(prompt):
             return response.choices[0].message.content.strip()
         return "No response from model."
 
-########################
-# Main misinformation check pipeline
-########################
+
+# main pipeline
+
+
 def misinformation_check(input_text):
     claims = extract_claims(input_text)
     gathered_docs = []
@@ -184,9 +180,10 @@ Format your answer with headings "Verdict:", "Summary:", and "Identified Claims:
         "identified_claims": claims
     }
 
-########################
-# Example usage
-########################
+
+# testing&debugging case usage
+
+
 if __name__ == "__main__":
     test_input = (
         "The COVID-19 vaccine contains microchips for tracking. "
@@ -194,8 +191,8 @@ if __name__ == "__main__":
         "The Eiffel Tower is the tallest building in the world."
     )
     result = misinformation_check(test_input)
-    print("=== Identified Claims ===")
+    print("Identified claims:")
     for c in result["identified_claims"]:
         print(f"- {c}")
-    print("\n=== Verdict and Summary ===")
+    print("\nVerdict and summary:")
     print(result["verdict_summary"])
