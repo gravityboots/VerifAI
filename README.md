@@ -1,5 +1,4 @@
 # VerifAI
-## An AI-powered web extension to magically mitigate misinformation
 
 ### Our Problem Statement
 The rapid spread of misinformation on social media and news platforms erodes digital trust, as people struggle to distinguish credible information from false claims. Manual fact-checking is too slow and ineffective for real-time contexts.
